@@ -1,5 +1,5 @@
 # Specify filepatterns you want git to ignore.
 
 node_modules/
-input.jpg
-output.jpg
+input*
+output*
