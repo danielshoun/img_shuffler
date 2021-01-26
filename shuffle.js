@@ -4,60 +4,57 @@ import Jimp from "jimp";
 const inFile = "input.jpg";
 
 getPixels(inFile, function(err, pixels) {
-    if(err) {
-        console.error("Could not load image.");
-    } else {
-        // Loads the image's pixels into a two dimensional dimensional array.
-        // The elements of each subarray are the [R, G, B, A] values of individual pixels.
-        let inPixelRGBArray = [];
-        for(let y = 0; y < pixels.shape[1]; y++) {
-            for(let x = 0; x < pixels.shape[0]; x++) {
-                const r = pixels.get(x, y, 0);
-                const g = pixels.get(x, y, 1);
-                const b = pixels.get(x, y, 2);
-                const a = pixels.get(x, y, 3);
-                const rgba = [r, g, b, a];
-                inPixelRGBArray.push(rgba)
-            }
+    if(err) throw err;
+    // Loads the image's pixels into a two dimensional dimensional array.
+    // The elements of each subarray are the [R, G, B, A] values of individual pixels.
+    let inPixelRGBArray = [];
+    for(let y = 0; y < pixels.shape[1]; y++) {
+        for(let x = 0; x < pixels.shape[0]; x++) {
+            const r = pixels.get(x, y, 0);
+            const g = pixels.get(x, y, 1);
+            const b = pixels.get(x, y, 2);
+            const a = pixels.get(x, y, 3);
+            const rgba = [r, g, b, a];
+            inPixelRGBArray.push(rgba)
         }
-
-        // Runs the pixel array through the shuffler defined below.
-        let outPixelRGBArrayFlat = processRules(inPixelRGBArray, 0)
-
-        // We need to turn the RGB array into a matrix whose dimensions are equal to the original image's.
-        // While we're at it, we'll also turn the RGBA values of each pixel into their hex values.
-        // Both of these are necessary to save an image file with Jimp.
-        // Problem: Somehow the output array of processRules() ends up with less pixels than the input.
-        // I'm filling them in with black for now but where the hell did they go?
-        let outPixelIntMatrix = []
-        let i = 0;
-        for(let y = 0; y < pixels.shape[1]; y++) {
-            outPixelIntMatrix.push([])
-            for(let x = 0; x < pixels.shape[0]; x++) {
-                if(i < outPixelRGBArrayFlat.length) {
-                    outPixelIntMatrix[y].push(Jimp.rgbaToInt(...outPixelRGBArrayFlat[i]))
-                } else {
-                    outPixelIntMatrix[y].push(Jimp.rgbaToInt(0, 0, 0, 0))
-                }
-                i++;
-            }
-        }
-
-        // Saves the image to the file "output.jpg".
-        let image = new Jimp(pixels.shape[0], pixels.shape[1], function(err, image) {
-            if(err) throw err;
-
-            outPixelIntMatrix.forEach((row, y) => {
-                row.forEach((color, x) => {
-                        image.setPixelColor(color, x, y);
-                    }
-                )})
-
-            image.write("output.jpg", (err) => {
-                if(err) throw err;
-            })
-        })
     }
+
+    // Runs the pixel array through the shuffler defined below.
+    let outPixelRGBArrayFlat = processRules(inPixelRGBArray, 0)
+
+    // We need to turn the RGB array into a matrix whose dimensions are equal to the original image's.
+    // While we're at it, we'll also turn the RGBA values of each pixel into their hex values.
+    // Both of these are necessary to save an image file with Jimp.
+    // Problem: Somehow the output array of processRules() ends up with less pixels than the input.
+    // I'm filling them in with black for now but where the hell did they go?
+    let outPixelIntMatrix = []
+    let i = 0;
+    for(let y = 0; y < pixels.shape[1]; y++) {
+        outPixelIntMatrix.push([])
+        for(let x = 0; x < pixels.shape[0]; x++) {
+            if(i < outPixelRGBArrayFlat.length) {
+                outPixelIntMatrix[y].push(Jimp.rgbaToInt(...outPixelRGBArrayFlat[i]))
+            } else {
+                outPixelIntMatrix[y].push(Jimp.rgbaToInt(...inPixelRGBArray[i]))
+            }
+            i++;
+        }
+    }
+
+    // Saves the image to the file "output.jpg".
+    let image = new Jimp(pixels.shape[0], pixels.shape[1], function(err, image) {
+        if(err) throw err;
+
+        outPixelIntMatrix.forEach((row, y) => {
+            row.forEach((color, x) => {
+                    image.setPixelColor(color, x, y);
+                }
+            )})
+
+        image.write("output.jpg", (err) => {
+            if(err) throw err;
+        })
+    })
 })
 
 // Patterns A and B determine the size of sub-chunks that are shuffled in the image.
